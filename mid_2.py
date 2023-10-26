@@ -1,9 +1,28 @@
 class Star_Cinema:
     hall_list = []
-    def entry_hall(self, hall):
-        self.hall_list.append(hall)
 
-    
+    @classmethod
+    def entry_hall(cls, hall):
+        cls.hall_list.append(hall)
+
+    @classmethod
+    def view_all_shows(cls):
+        print("Shows in Star Cinema:")
+        for hall in cls.hall_list:
+            hall.view_show_list()
+
+    @classmethod
+    def view_available_seats(cls, show_id):
+        for hall in cls.hall_list:
+            hall.view_available_seats(show_id)
+
+    @classmethod
+    def book_tickets(cls, show_id, num_tickets, seat_list):
+        for hall in cls.hall_list:
+            if hall.book_seats(show_id, num_tickets, seat_list):
+                return
+        print(f"Show ID {show_id} not found.")
+
 class Hall:
     def __init__(self, rows, cols, hall_no):
         self.rows = rows
@@ -17,21 +36,31 @@ class Hall:
         self.show_list.append(show_info)
         self.seats[id] = [[0] * self.cols for _ in range(self.rows)]
 
-    def book_seats(self, show_id, seat_list):
+    def book_seats(self, show_id, num_tickets, seat_list):
         if show_id not in self.seats:
             print(f"Invalid show ID: {show_id}")
-            return
+            return False
 
         show_seats = self.seats[show_id]
+        booked_seats = 0
 
-        for row, col in seat_list:
+        for seat in seat_list:
+            row, col = seat
             if 1 <= row <= self.rows and 1 <= col <= self.cols:
                 if show_seats[row - 1][col - 1] == 0:
                     show_seats[row - 1][col - 1] = 1
+                    booked_seats += 1
                 else:
                     print(f"Seat ({row}, {col}) is already booked for show {show_id}.")
             else:
                 print(f"Invalid seat ({row}, {col}) for show {show_id}.")
+
+        if booked_seats == num_tickets:
+            print(f"Successfully booked {num_tickets} ticket(s) for show {show_id}.")
+            return True
+        else:
+            print(f"Could not book {num_tickets} ticket(s) for show {show_id}.")
+            return False
 
     def view_show_list(self):
         print("Shows running in this hall:")
@@ -56,15 +85,13 @@ class Hall:
             print(f"Seat: {seat[0]}, {seat[1]}")
 
 def main():
-    hall1 = Hall(5, 10, 1)
-    hall2 = Hall(7, 12, 2)
+    hall = Hall(5, 10, 1)
+    
 
     cinema = Star_Cinema()
-    cinema.entry_hall(hall1)
-    cinema.entry_hall(hall2)
+    cinema.entry_hall(hall)
 
-    hall1.entry_show(1, "Movie 1", "10:00 AM")
-    hall2.entry_show(2, "Movie 2", "2:00 PM")
+    hall.entry_show(1, "Movie 1", "10:00 AM")
 
     while True:
         print("\nOptions:")
@@ -78,15 +105,16 @@ def main():
         if option == "1":
             cinema.view_all_shows()
         elif option == "2":
-            hall_no = int(input("Enter the hall number: "))
             show_id = int(input("Enter the show ID: "))
-            cinema.view_available_seats(hall_no, show_id)
+            cinema.view_available_seats(show_id)
         elif option == "3":
-            hall_no = int(input("Enter the hall number: "))
             show_id = int(input("Enter the show ID: "))
-            seats_str = input("Enter the seats (e.g., '1,2 3,4'): ")
-            seat_list = [tuple(map(int, seat.split(',')) for seat in seats_str.split())]
-            cinema.book_tickets(hall_no, show_id, seat_list)
+            num_tickets = int(input("Enter the number of tickets to book: "))
+            seat_list = []
+            for _ in range(num_tickets):
+                seat = tuple(map(int, input(f"Enter seat {len(seat_list) + 1} (e.g., '1,2'): ").split(',')))
+                seat_list.append(seat)
+            cinema.book_tickets(show_id, num_tickets, seat_list) 
         elif option == "4":
             print("Exited...")
             break
